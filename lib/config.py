@@ -11,18 +11,18 @@ default_sentinel_config = os.path.normpath(
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
 sentinel_cfg = DashConfig.tokenize(sentinel_config_file)
 sentinel_version = "1.2.0"
-min_dashd_proto_version_with_sentinel_ping = 70207
+min_papeld_proto_version_with_sentinel_ping = 70207
 
 
 def get_dash_conf():
     if sys.platform == 'win32':
-        dash_conf = os.path.join(os.getenv('APPDATA'), "DashCore/dash.conf")
+        dash_conf = os.path.join(os.getenv('APPDATA'), "PapelCore/papel.conf")
     else:
         home = os.environ.get('HOME')
 
-        dash_conf = os.path.join(home, ".dashcore/dash.conf")
+        dash_conf = os.path.join(home, ".papelcore/papel.conf")
         if sys.platform == 'darwin':
-            dash_conf = os.path.join(home, "Library/Application Support/DashCore/dash.conf")
+            dash_conf = os.path.join(home, "Library/Application Support/PapelCore/papel.conf")
 
     dash_conf = sentinel_cfg.get('dash_conf', dash_conf)
 

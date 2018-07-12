@@ -1,5 +1,5 @@
 """
-dashd JSONRPC interface
+papeld JSONRPC interface
 """
 import sys
 import os
@@ -22,7 +22,7 @@ class DashDaemon():
 
         self.creds = (user, password, host, port)
 
-        # memoize calls to some dashd methods
+        # memoize calls to some papeld methods
         self.governance_info = None
         self.gobject_votes = {}
 
@@ -220,7 +220,7 @@ class DashDaemon():
     @property
     def has_sentinel_ping(self):
         getinfo = self.rpc_command('getinfo')
-        return (getinfo['protocolversion'] >= config.min_dashd_proto_version_with_sentinel_ping)
+        return (getinfo['protocolversion'] >= config.min_papeld_proto_version_with_sentinel_ping)
 
     def ping(self):
         self.rpc_command('sentinelping', config.sentinel_version)

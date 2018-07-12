@@ -163,7 +163,7 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time, 
             payment_amounts='|'.join([pd['amount'] for pd in payments]),
             proposal_hashes='|'.join([pd['proposal'] for pd in payments])
         )
-        data_size = len(sb_temp.dashd_serialise())
+        data_size = len(sb_temp.papeld_serialise())
 
         if data_size > maxgovobjdatasize:
             printdbg("MAX_GOVERNANCE_OBJECT_DATA_SIZE limit reached!")
@@ -194,25 +194,25 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time, 
 
 
 # shims 'til we can fix the JSON format
-def SHIM_serialise_for_dashd(sentinel_hex):
+def SHIM_serialise_for_papeld(sentinel_hex):
     from models import GOVOBJ_TYPE_STRINGS
 
     # unpack
     obj = deserialise(sentinel_hex)
 
-    # shim for dashd
+    # shim for papeld
     govtype_string = GOVOBJ_TYPE_STRINGS[obj['type']]
 
-    # superblock => "trigger" in dashd
+    # superblock => "trigger" in papeld
     if govtype_string == 'superblock':
         govtype_string = 'trigger'
 
-    # dashd expects an array (will be deprecated)
+    # papeld expects an array (will be deprecated)
     obj = [(govtype_string, obj,)]
 
     # re-pack
-    dashd_hex = serialise(obj)
-    return dashd_hex
+    papeld_hex = serialise(obj)
+    return papeld_hex
 
 
 # convenience
@@ -236,7 +236,7 @@ def did_we_vote(output):
     err_msg = ''
 
     try:
-        detail = output.get('detail').get('dash.conf')
+        detail = output.get('detail').get('papel.conf')
         result = detail.get('result')
         if 'errorMessage' in detail:
             err_msg = detail.get('errorMessage')
