@@ -28,7 +28,7 @@ db.connect()
 
 
 # TODO: lookup table?
-DASHD_GOVOBJ_TYPES = {
+PAPELD_GOVOBJ_TYPES = {
     'proposal': 1,
     'superblock': 2,
 }
@@ -103,7 +103,7 @@ class GovernanceObject(BaseModel):
     @classmethod
     def import_gobject_from_papeld(self, papeld, rec):
         import decimal
-        import dashlib
+        import papellib
         import binascii
         import gobject_json
 
@@ -146,7 +146,7 @@ class GovernanceObject(BaseModel):
             printdbg("govobj updated = %d" % count)
         subdikt['governance_object'] = govobj
 
-        # get/create, then sync payment amounts, etc. from papeld - Dashd is the master
+        # get/create, then sync payment amounts, etc. from papeld - Papeld is the master
         try:
             newdikt = subdikt.copy()
             newdikt['object_hash'] = object_hash
@@ -181,7 +181,7 @@ class GovernanceObject(BaseModel):
         return cmd
 
     def vote(self, papeld, signal, outcome):
-        import dashlib
+        import papellib
 
         # At this point, will probably never reach here. But doesn't hurt to
         # have an extra check just in case objects get out of sync (people will
@@ -214,7 +214,7 @@ class GovernanceObject(BaseModel):
         output = papeld.rpc_command(*vote_command)
 
         # extract vote output parsing to external lib
-        voted = dashlib.did_we_vote(output)
+        voted = papellib.did_we_vote(output)
 
         if voted:
             printdbg('VOTE success, saving Vote object to database')
@@ -279,13 +279,13 @@ class Proposal(GovernanceClass, BaseModel):
     # src/governance-validators.cpp
     MAX_DATA_SIZE = 512
 
-    govobj_type = DASHD_GOVOBJ_TYPES['proposal']
+    govobj_type = PAPELD_GOVOBJ_TYPES['proposal']
 
     class Meta:
         db_table = 'proposals'
 
     def is_valid(self):
-        import dashlib
+        import papellib
 
         printdbg("In Proposal#is_valid, for Proposal: %s" % self.__dict__)
 
@@ -315,9 +315,9 @@ class Proposal(GovernanceClass, BaseModel):
                 printdbg("\tProposal amount [%s] is negative or zero, returning False" % self.payment_amount)
                 return False
 
-            # payment address is valid base58 dash addr, non-multisig
-            if not dashlib.is_valid_dash_address(self.payment_address, config.network):
-                printdbg("\tPayment address [%s] not a valid Dash address for network [%s], returning False" % (self.payment_address, config.network))
+            # payment address is valid base58 papel addr, non-multisig
+            if not papellib.is_valid_papel_address(self.payment_address, config.network):
+                printdbg("\tPayment address [%s] not a valid Papel address for network [%s], returning False" % (self.payment_address, config.network))
                 return False
 
             # URL
@@ -330,7 +330,7 @@ class Proposal(GovernanceClass, BaseModel):
                 printdbg("\tProposal URL [%s] has whitespace, returning False" % self.name)
                 return False
 
-            # Dash Core restricts proposals to 512 bytes max
+            # Papel Core restricts proposals to 512 bytes max
             if len(self.serialise()) > (self.MAX_DATA_SIZE * 2):
                 printdbg("\tProposal [%s] is too big, returning False" % self.name)
                 return False
@@ -350,7 +350,7 @@ class Proposal(GovernanceClass, BaseModel):
 
     def is_expired(self, superblockcycle=None):
         from constants import SUPERBLOCK_FUDGE_WINDOW
-        import dashlib
+        import papellib
 
         if not superblockcycle:
             raise Exception("Required field superblockcycle missing.")
@@ -362,7 +362,7 @@ class Proposal(GovernanceClass, BaseModel):
         # half the SB cycle, converted to seconds
         # add the fudge_window in seconds, defined elsewhere in Sentinel
         expiration_window_seconds = int(
-            (dashlib.blocks_to_seconds(superblockcycle) / 2) +
+            (papellib.blocks_to_seconds(superblockcycle) / 2) +
             SUPERBLOCK_FUDGE_WINDOW
         )
         printdbg("\texpiration_window_seconds = %s" % expiration_window_seconds)
@@ -430,14 +430,14 @@ class Superblock(BaseModel, GovernanceClass):
     sb_hash = CharField()
     object_hash = CharField(max_length=64)
 
-    govobj_type = DASHD_GOVOBJ_TYPES['superblock']
+    govobj_type = PAPELD_GOVOBJ_TYPES['superblock']
     only_masternode_can_submit = True
 
     class Meta:
         db_table = 'superblocks'
 
     def is_valid(self):
-        import dashlib
+        import papellib
         import decimal
 
         printdbg("In Superblock#is_valid, for SB: %s" % self.__dict__)
@@ -445,7 +445,7 @@ class Superblock(BaseModel, GovernanceClass):
         # it's a string from the DB...
         addresses = self.payment_addresses.split('|')
         for addr in addresses:
-            if not dashlib.is_valid_dash_address(addr, config.network):
+            if not papellib.is_valid_papel_address(addr, config.network):
                 printdbg("\tInvalid address [%s], returning False" % addr)
                 return False
 
@@ -478,8 +478,8 @@ class Superblock(BaseModel, GovernanceClass):
         return True
 
     def hash(self):
-        import dashlib
-        return dashlib.hashit(self.serialise())
+        import papellib
+        return papellib.hashit(self.serialise())
 
     def hex_hash(self):
         return "%x" % self.hash()
