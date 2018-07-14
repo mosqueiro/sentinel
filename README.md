@@ -2,7 +2,7 @@
 
 An all-powerful toolset for Papel.
 
-Sentinel is an autonomous agent for persisting, processing and automating Dash governance objects and tasks, and for expanded functions.
+Sentinel is an autonomous agent for persisting, processing and automating Papel governance objects and tasks, and for expanded functions.
 
 Sentinel is implemented as a Python application that binds to a local version 12 papeld instance on each Papel Masternode.
 
@@ -49,7 +49,7 @@ Removed temporarily.
 
 ## Configuration
 
-An alternative (non-default) path to the `dash.conf` file can be specified in `sentinel.conf`:
+An alternative (non-default) path to the `papel.conf` file can be specified in `sentinel.conf`:
 
     papel_conf=/path/to/papel.conf
 
@@ -65,4 +65,4 @@ To view the debug output in real time enter:
 
 ### License
 
-Released under the MIT license, under the same terms as DashCore itself. See [LICENSE](LICENSE) for more info.
+Released under the MIT license, under the same terms as PapelCore itself. See [LICENSE](LICENSE) for more info.
