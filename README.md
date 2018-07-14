@@ -39,7 +39,7 @@ In the crontab editor, add the lines below, replacing '/home/YOURUSERNAME/sentin
 
     * * * * * cd /home/YOURUSERNAME/sentinel && ./venv/bin/python bin/sentinel.py >/dev/null 2>&1
     
-If you followed a guide where it had you install Terracoin to the root directory your path to where you cloned sentiel will be:
+If you followed a guide where it had you install Papelcoin to the root directory your path to where you cloned sentiel will be:
 
     * * * * * cd /root/sentinel && SENTINEL_DEBUG=1 ./venv/bin/python bin/sentinel.py >> sentinel.log 2>&1
 
