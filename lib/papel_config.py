@@ -34,7 +34,7 @@ class PapelConfig():
         creds = {key: value for (key, value) in match}
 
         # standard Papel defaults...
-        default_port = 21998 if (network == 'mainnet') else 21999
+        default_port = 21999 if (network == 'mainnet') else 21998
 
         # use default port for network if not specified in papel.conf
         if not ('port' in creds):
