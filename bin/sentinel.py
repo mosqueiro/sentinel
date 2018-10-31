@@ -5,7 +5,7 @@ sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib
 import init
 import config
 import misc
-from papeld import PapelDaemon
+from zcored import ZCoreDaemon
 from models import Superblock, Proposal, GovernanceObject
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
@@ -19,30 +19,30 @@ from scheduler import Scheduler
 import argparse
 
 
-# sync papeld gobject list with our local relational DB backend
-def perform_papeld_object_sync(papeld):
-    GovernanceObject.sync(papeld)
+# sync zcored gobject list with our local relational DB backend
+def perform_zcored_object_sync(zcored):
+    GovernanceObject.sync(zcored)
 
 
-def prune_expired_proposals(papeld):
+def prune_expired_proposals(zcored):
     # vote delete for old proposals
-    for proposal in Proposal.expired(papeld.superblockcycle()):
-        proposal.vote(papeld, VoteSignals.delete, VoteOutcomes.yes)
+    for proposal in Proposal.expired(zcored.superblockcycle()):
+        proposal.vote(zcored, VoteSignals.delete, VoteOutcomes.yes)
 
 
-# ping papeld
-def sentinel_ping(papeld):
+# ping zcored
+def sentinel_ping(zcored):
     printdbg("in sentinel_ping")
 
-    papeld.ping()
+    zcored.ping()
 
     printdbg("leaving sentinel_ping")
 
 
-def attempt_superblock_creation(papeld):
-    import papellib
+def attempt_superblock_creation(zcored):
+    import zcorelib
 
-    if not papeld.is_masternode():
+    if not zcored.is_masternode():
         print("We are not a Masternode... can't submit superblocks!")
         return
 
@@ -53,7 +53,7 @@ def attempt_superblock_creation(papeld):
     # has this masternode voted on *any* superblocks at the given event_block_height?
     # have we voted FUNDING=YES for a superblock for this specific event_block_height?
 
-    event_block_height = papeld.next_superblock_height()
+    event_block_height = zcored.next_superblock_height()
 
     if Superblock.is_voted_funding(event_block_height):
         # printdbg("ALREADY VOTED! 'til next time!")
@@ -61,21 +61,21 @@ def attempt_superblock_creation(papeld):
         # vote down any new SBs because we've already chosen a winner
         for sb in Superblock.at_height(event_block_height):
             if not sb.voted_on(signal=VoteSignals.funding):
-                sb.vote(papeld, VoteSignals.funding, VoteOutcomes.no)
+                sb.vote(zcored, VoteSignals.funding, VoteOutcomes.no)
 
         # now return, we're done
         return
 
-    if not papeld.is_govobj_maturity_phase():
+    if not zcored.is_govobj_maturity_phase():
         printdbg("Not in maturity phase yet -- will not attempt Superblock")
         return
 
-    proposals = Proposal.approved_and_ranked(proposal_quorum=papeld.governance_quorum(), next_superblock_max_budget=papeld.next_superblock_max_budget())
-    budget_max = papeld.get_superblock_budget_allocation(event_block_height)
-    sb_epoch_time = papeld.block_height_to_epoch(event_block_height)
+    proposals = Proposal.approved_and_ranked(proposal_quorum=zcored.governance_quorum(), next_superblock_max_budget=zcored.next_superblock_max_budget())
+    budget_max = zcored.get_superblock_budget_allocation(event_block_height)
+    sb_epoch_time = zcored.block_height_to_epoch(event_block_height)
 
-    maxgovobjdatasize = papeld.govinfo['maxgovobjdatasize']
-    sb = papellib.create_superblock(proposals, event_block_height, budget_max, sb_epoch_time, maxgovobjdatasize)
+    maxgovobjdatasize = zcored.govinfo['maxgovobjdatasize']
+    sb = zcorelib.create_superblock(proposals, event_block_height, budget_max, sb_epoch_time, maxgovobjdatasize)
     if not sb:
         printdbg("No superblock created, sorry. Returning.")
         return
@@ -83,12 +83,12 @@ def attempt_superblock_creation(papeld):
     # find the deterministic SB w/highest object_hash in the DB
     dbrec = Superblock.find_highest_deterministic(sb.hex_hash())
     if dbrec:
-        dbrec.vote(papeld, VoteSignals.funding, VoteOutcomes.yes)
+        dbrec.vote(zcored, VoteSignals.funding, VoteOutcomes.yes)
 
         # any other blocks which match the sb_hash are duplicates, delete them
         for sb in Superblock.select().where(Superblock.sb_hash == sb.hex_hash()):
             if not sb.voted_on(signal=VoteSignals.funding):
-                sb.vote(papeld, VoteSignals.delete, VoteOutcomes.yes)
+                sb.vote(zcored, VoteSignals.delete, VoteOutcomes.yes)
 
         printdbg("VOTED FUNDING FOR SB! We're done here 'til next superblock cycle.")
         return
@@ -96,24 +96,24 @@ def attempt_superblock_creation(papeld):
         printdbg("The correct superblock wasn't found on the network...")
 
     # if we are the elected masternode...
-    if (papeld.we_are_the_winner()):
+    if (zcored.we_are_the_winner()):
         printdbg("we are the winner! Submit SB to network")
-        sb.submit(papeld)
+        sb.submit(zcored)
 
 
-def check_object_validity(papeld):
+def check_object_validity(zcored):
     # vote (in)valid objects
     for gov_class in [Proposal, Superblock]:
         for obj in gov_class.select():
-            obj.vote_validity(papeld)
+            obj.vote_validity(zcored)
 
 
-def is_papeld_port_open(papeld):
+def is_zcored_port_open(zcored):
     # test socket open before beginning, display instructive message to MN
     # operators if it's not
     port_open = False
     try:
-        info = papeld.rpc_command('getgovernanceinfo')
+        info = zcored.rpc_command('getgovernanceinfo')
         port_open = True
     except (socket.error, JSONRPCException) as e:
         print("%s" % e)
@@ -122,21 +122,21 @@ def is_papeld_port_open(papeld):
 
 
 def main():
-    papeld = PapelDaemon.from_papel_conf(config.papel_conf)
+    zcored = ZCoreDaemon.from_zcore_conf(config.zcore_conf)
     options = process_args()
 
-    # check papeld connectivity
-    if not is_papeld_port_open(papeld):
-        print("Cannot connect to papeld. Please ensure papeld is running and the JSONRPC port is open to Sentinel.")
+    # check zcored connectivity
+    if not is_zcored_port_open(zcored):
+        print("Cannot connect to zcored. Please ensure zcored is running and the JSONRPC port is open to Sentinel.")
         return
 
-    # check papeld sync
-    if not papeld.is_synced():
-        print("papeld not synced with network! Awaiting full sync before running Sentinel.")
+    # check zcored sync
+    if not zcored.is_synced():
+        print("zcored not synced with network! Awaiting full sync before running Sentinel.")
         return
 
     # ensure valid masternode
-    if not papeld.is_masternode():
+    if not zcored.is_masternode():
         print("Invalid Masternode Status, cannot continue.")
         return
 
@@ -168,19 +168,19 @@ def main():
     # ========================================================================
     #
     # load "gobject list" rpc command data, sync objects into internal database
-    perform_papeld_object_sync(papeld)
+    perform_zcored_object_sync(zcored)
 
-    if papeld.has_sentinel_ping:
-        sentinel_ping(papeld)
+    if zcored.has_sentinel_ping:
+        sentinel_ping(zcored)
 
     # auto vote network objects as valid/invalid
-    # check_object_validity(papeld)
+    # check_object_validity(zcored)
 
     # vote to delete expired proposals
-    prune_expired_proposals(papeld)
+    prune_expired_proposals(zcored)
 
     # create a Superblock if necessary
-    attempt_superblock_creation(papeld)
+    attempt_superblock_creation(zcored)
 
     # schedule the next run
     Scheduler.schedule_next_run()

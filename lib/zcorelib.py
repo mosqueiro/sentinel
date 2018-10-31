@@ -12,14 +12,14 @@ from misc import printdbg, epoch2str
 import time
 
 
-def is_valid_papel_address(address, network='mainnet'):
+def is_valid_zcore_address(address, network='mainnet'):
     # Only public key addresses are allowed
     # A valid address is a RIPEMD-160 hash which contains 20 bytes
     # Prior to base58 encoding 1 version byte is prepended and
     # 4 checksum bytes are appended so the total number of
     # base58 encoded bytes should be 25.  This means the number of characters
     # in the encoding should be about 34 ( 25 * log2( 256 ) / log2( 58 ) ).
-    papel_version = 140 if network == 'testnet' else 76
+    zcore_version = 140 if network == 'testnet' else 76
 
     # Check length (This is important because the base58 library has problems
     # with long addresses (which are invalid anyway).
@@ -32,10 +32,10 @@ def is_valid_papel_address(address, network='mainnet'):
         decoded = base58.b58decode_chk(address)
         address_version = ord(decoded[0:1])
     except:
-        # rescue from exception, not a valid Papel address
+        # rescue from exception, not a valid ZCore address
         return False
 
-    if (address_version != papel_version):
+    if (address_version != zcore_version):
         return False
 
     return True
@@ -163,7 +163,7 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time, 
             payment_amounts='|'.join([pd['amount'] for pd in payments]),
             proposal_hashes='|'.join([pd['proposal'] for pd in payments])
         )
-        data_size = len(sb_temp.papeld_serialise())
+        data_size = len(sb_temp.zcored_serialise())
 
         if data_size > maxgovobjdatasize:
             printdbg("MAX_GOVERNANCE_OBJECT_DATA_SIZE limit reached!")
@@ -194,25 +194,25 @@ def create_superblock(proposals, event_block_height, budget_max, sb_epoch_time, 
 
 
 # shims 'til we can fix the JSON format
-def SHIM_serialise_for_papeld(sentinel_hex):
+def SHIM_serialise_for_zcored(sentinel_hex):
     from models import GOVOBJ_TYPE_STRINGS
 
     # unpack
     obj = deserialise(sentinel_hex)
 
-    # shim for papeld
+    # shim for zcored
     govtype_string = GOVOBJ_TYPE_STRINGS[obj['type']]
 
-    # superblock => "trigger" in papeld
+    # superblock => "trigger" in zcored
     if govtype_string == 'superblock':
         govtype_string = 'trigger'
 
-    # papeld expects an array (will be deprecated)
+    # zcored expects an array (will be deprecated)
     obj = [(govtype_string, obj,)]
 
     # re-pack
-    papeld_hex = serialise(obj)
-    return papeld_hex
+    zcored_hex = serialise(obj)
+    return zcored_hex
 
 
 # convenience
@@ -236,7 +236,7 @@ def did_we_vote(output):
     err_msg = ''
 
     try:
-        detail = output.get('detail').get('papel.conf')
+        detail = output.get('detail').get('zcore.conf')
         result = detail.get('result')
         if 'errorMessage' in detail:
             err_msg = detail.get('errorMessage')

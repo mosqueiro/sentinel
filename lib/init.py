@@ -56,23 +56,23 @@ def is_database_correctly_configured():
     return configured
 
 
-def has_papel_conf():
+def has_zcore_conf():
     import config
     import io
 
-    valid_papel_conf = False
+    valid_zcore_conf = False
 
-    # ensure papel_conf exists & readable
+    # ensure zcore_conf exists & readable
     #
-    # if not, print a message stating that Papel Core must be installed and
-    # configured, including JSONRPC access in papel.conf
+    # if not, print a message stating that ZCore must be installed and
+    # configured, including JSONRPC access in zcore.conf
     try:
-        f = io.open(config.papel_conf)
-        valid_papel_conf = True
+        f = io.open(config.zcore_conf)
+        valid_zcore_conf = True
     except IOError as e:
         print(e)
 
-    return valid_papel_conf
+    return valid_zcore_conf
 
 
 # === begin main
@@ -94,8 +94,8 @@ def main():
         print("Please ensure correct database configuration.")
         sys.exit(1)
 
-    if not has_papel_conf():
-        print("PapelCore must be installed and configured, including JSONRPC access in papel.conf")
+    if not has_zcore_conf():
+        print("ZCore must be installed and configured, including JSONRPC access in zcore.conf")
         sys.exit(1)
 
 

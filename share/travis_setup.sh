@@ -1,9 +1,9 @@
 #!/bin/bash
 set -evx
 
-mkdir ~/.papelcore
+mkdir ~/.zcore
 
 # safety check
-if [ ! -f ~/.papelcore/.papel.conf ]; then
-  cp share/papel.conf.example ~/.papelcore/papel.conf
+if [ ! -f ~/.zcore/.zcore.conf ]; then
+  cp share/zcore.conf.example ~/.zcore/zcore.conf
 fi

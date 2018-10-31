@@ -3,30 +3,30 @@
 """
 import sys
 import os
-from papel_config import PapelConfig
+from zcore_config import ZCoreConfig
 
 default_sentinel_config = os.path.normpath(
     os.path.join(os.path.dirname(__file__), '../sentinel.conf')
 )
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
-sentinel_cfg = PapelConfig.tokenize(sentinel_config_file)
+sentinel_cfg = ZCoreConfig.tokenize(sentinel_config_file)
 sentinel_version = "1.2.0"
-min_papeld_proto_version_with_sentinel_ping = 70207
+min_zcored_proto_version_with_sentinel_ping = 70207
 
 
-def get_papel_conf():
+def get_zcore_conf():
     if sys.platform == 'win32':
-        papel_conf = os.path.join(os.getenv('APPDATA'), "PapelCore/papel.conf")
+        zcore_conf = os.path.join(os.getenv('APPDATA'), "ZCoreCore/zcore.conf")
     else:
         home = os.environ.get('HOME')
 
-        papel_conf = os.path.join(home, ".papelcore/papel.conf")
+        zcore_conf = os.path.join(home, ".zcore/zcore.conf")
         if sys.platform == 'darwin':
-            papel_conf = os.path.join(home, "Library/Application Support/PapelCore/papel.conf")
+            zcore_conf = os.path.join(home, "Library/Application Support/ZCoreCore/zcore.conf")
 
-    papel_conf = sentinel_cfg.get('papel_conf', papel_conf)
+    zcore_conf = sentinel_cfg.get('zcore_conf', zcore_conf)
 
-    return papel_conf
+    return zcore_conf
 
 
 def get_network():
@@ -86,7 +86,7 @@ def get_db_conn():
     return db
 
 
-papel_conf = get_papel_conf()
+zcore_conf = get_zcore_conf()
 network = get_network()
 rpc_host = get_rpchost()
 db = get_db_conn()

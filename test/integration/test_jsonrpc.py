@@ -8,12 +8,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 import config
 
-from papeld import PapelDaemon
-from papel_config import PapelConfig
+from zcored import ZCoreDaemon
+from zcore_config import ZCoreConfig
 
 
-def test_papeld():
-    config_text = PapelConfig.slurp_config_file(config.papel_conf)
+def test_zcored():
+    config_text = ZCoreConfig.slurp_config_file(config.zcore_conf)
     network = 'mainnet'
     is_testnet = False
     genesis_hash = u'00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6'
@@ -23,15 +23,15 @@ def test_papeld():
             is_testnet = True
             genesis_hash = u'00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c'
 
-    creds = PapelConfig.get_rpc_creds(config_text, network)
-    papeld = PapelDaemon(**creds)
-    assert papeld.rpc_command is not None
+    creds = ZCoreConfig.get_rpc_creds(config_text, network)
+    zcored = ZCoreDaemon(**creds)
+    assert zcored.rpc_command is not None
 
-    assert hasattr(papeld, 'rpc_connection')
+    assert hasattr(zcored, 'rpc_connection')
 
-    # Papel testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
+    # ZCore testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
     # test commands without arguments
-    info = papeld.rpc_command('getinfo')
+    info = zcored.rpc_command('getinfo')
     info_keys = [
         'blocks',
         'connections',
@@ -48,4 +48,4 @@ def test_papeld():
     assert info['testnet'] is is_testnet
 
     # test commands with args
-    assert papeld.rpc_command('getblockhash', 0) == genesis_hash
+    assert zcored.rpc_command('getblockhash', 0) == genesis_hash
